@@ -1,0 +1,80 @@
+#!/usr/bin/python
+
+import os
+import subprocess
+
+# functions: replace to entered variables
+def replace_min_file():
+    comm_min = "find {staff1} -type f -exec du -b {} + | grep -v \"main_file\" | sort -n | head -n 1 | awk '{print $2}'"
+    return comm_min.replace('{staff1}', direc)
+
+def main_file_path():
+    comm_main = "{staff1}/main_file"
+    return comm_main.replace('{staff1}', direc)
+
+# Functions for returning outputs of terminal commands
+def min_file_path_func():
+    min_file = subprocess.run(comm_min, shell=True, stdout=subprocess.PIPE, encoding='utf-8')
+    out = min_file.stdout
+    return out[0:-1]
+
+def main_file_size_func():
+    cmd = "du -b " + main_file_path + " | awk '{print $1}'"
+    main_file_size = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, encoding='utf-8')
+    return main_file_size.stdout
+
+# Help for user
+if input("Введите знак вопроса (?), если не знаете, как использовать скрипт: ") == '?':
+    print("Чтобы запустить файл на устройстве нужно иметь права для запуска -??x??x??x, для того, чтобы получить такую конфигурацию, выполните в терминале команду \$ chmod +x. Про ввод переменных: чтобы путем конкатенации получить файл размером > определенного кол-ва байт, нужно ввести следующую команду: ./script_name.py. 'Число_в_байтах' ввести в поле и оно должно содержать лишь цифры десятичного алфавита и быть размером блока вашей файловой системы или устройства")
+    exit()
+
+# Data entry
+n_bytes = int(input("Введите размер блока памяти: "))
+direc = input("введите полный путь к директории, к которой нужно применить скрипт: ")
+
+# Replace and get main_file's full path
+comm_min = replace_min_file()
+main_file_path = main_file_path()
+
+# Getting output
+min_file_path = min_file_path_func()
+
+# Create main_file
+comm_crt = "> " + main_file_path
+os.system(comm_crt)
+
+main_file_size = main_file_size_func()
+
+print("размер блока памяти в байтах:", n_bytes)
+
+while int(main_file_size) <= n_bytes:
+    comm_cat = "cat " + min_file_path + " >> " + main_file_path
+    os.system(comm_cat)
+    print("файл " + min_file_path + " был удален и присоединен к " + main_file_path)
+
+    os.remove(min_file_path)
+
+    main_file_size = main_file_size_func()
+    print("размер " + main_file_path + " = " + str(main_file_size))
+
+    min_file_path = min_file_path_func()
+
+print("конечный размер главного файла:", main_file_size)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#total_size1 = subprocess.Popen("find ~/test1/ -type f -name 'file_a.*' -exec du -cb {} + | grep total$ | awk '{ print $1 }'", shell = True, stdout = subprocess.PIPE)
+#total_size = total_size1.communicate()[0]
+#max_file1 = subprocess.Popen("find ~/test1/ -type f -name 'file_a.*' -exec du -cb {} + | sort -n -r | head -n2 | awk 'NR == 2 { print $2 }'", shell = True, stdout = subprocess.PIPE)
+#max_file = max_file1.communicate()[0]
